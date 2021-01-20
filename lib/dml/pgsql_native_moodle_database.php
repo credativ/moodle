@@ -172,6 +172,18 @@ class pgsql_native_moodle_database extends moodle_database {
             $connection .= " connect_timeout=".$this->dboptions['connecttimeout'];
         }
 
+        if (!empty($this->dboptions['dbfailover'])) {
+	    // Failover handling has been requested. However, we only add the
+	    // "target_session_attrs=read-write" option to the connection if
+	    // there is more than one host specified in $CFG->dbhost, because
+	    // otherwise this option has no effect and would then be added to
+	    // possible read-only standbys as well.
+	    $myhosts = explode(',', $this->dbhost);
+            if (count($myhosts) > 1) {
+                $connection .= " target_session_attrs=read-write";
+            }
+        }
+
         if (empty($this->dboptions['dbhandlesoptions'])) {
             // ALTER USER and ALTER DATABASE are overridden by these settings.
             $options = array('--client_encoding=utf8', '--standard_conforming_strings=on');
